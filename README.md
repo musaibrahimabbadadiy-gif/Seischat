@@ -58,8 +58,9 @@ seischat/
 ```
 
 The `frontend/` contains the current React application and `backend/` contains
-the Phase 1 FastAPI foundation. See the [backend guide](backend/README.md) for
-setup, testing, and migration instructions.
+the FastAPI foundation and authentication database models. See the
+[backend guide](backend/README.md) for setup, testing, and migration
+instructions.
 
 ## Development Setup
 
@@ -96,9 +97,9 @@ Copy-Item .env.example .env
 uvicorn app.main:app --reload
 ```
 
-The API is available at `http://127.0.0.1:8000`; Phase 1 exposes `GET /health`.
-There are no models or migration revisions yet, so Alembic should be used
-only after a later phase adds the first model.
+The API is available at `http://127.0.0.1:8000`; `GET /health` is available.
+Configure PostgreSQL in `backend/.env` and apply the user and session migration
+from `backend/` with `alembic upgrade head`.
 
 Run backend tests from `backend/` with `pytest`.
 

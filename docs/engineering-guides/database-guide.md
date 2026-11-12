@@ -22,7 +22,7 @@ Create `users`, `sessions`, and `messages`; enforce username and session credent
 
 ## 6. Implementation sequence
 
-1. Model users with UUID primary key, normalized unique username, Argon2id hash, and timestamps.
+1. Model users with UUID primary key, unique username, password hash, and timestamps. Do not invent normalization until the team decides its rules.
 2. Model sessions with UUID, user foreign key, hash of the session credential, expiry, creation, and revocation timestamps.
 3. Model messages with UUID, author foreign key, content, and creation timestamp. Do not retain a soft-delete column for V1 hard deletion.
 4. Add constraints and indexes for foreign keys, expiry, message ordering, and ownership.
@@ -33,7 +33,7 @@ Create `users`, `sessions`, and `messages`; enforce username and session credent
 
 ## 7. Expected files/components
 
-Expected equivalents include SQLAlchemy model modules, database/session configuration, Alembic environment and revisions, repositories/data-access functions, and database fixtures. Keep schema details synchronized with `docs/api-contract.md`.
+The current implementation uses `backend/app/models/` for user and session models, `backend/app/database/` for the declarative base and database connection, `backend/migrations/` for Alembic, and `backend/tests/test_models.py` for isolated model tests. Message models and repositories/data-access functions belong to later feature phases. Keep schema details synchronized with `docs/database-design.md` and `docs/api-contract.md`.
 
 ## 8. Connections
 
@@ -41,7 +41,7 @@ Registration inserts a user; login inserts a server session; authenticated reque
 
 ## 9. Testing
 
-Test constraints, relationships, migration creation/upgrade, cursor first/next/last pages, equal timestamps, transaction rollback, session expiry/revocation, hard deletion, and database isolation. Use realistic SeisChat rows rather than unrelated sample data.
+Test constraints, relationships, session expiry/revocation, migration creation/upgrade, cursor first/next/last pages, equal timestamps, transaction rollback, hard deletion, and database isolation. Model tests use an in-memory SQLite database; test PostgreSQL migrations with a separate local test database, never production data. Use realistic SeisChat rows rather than unrelated sample data.
 
 ## 10. Common mistakes
 

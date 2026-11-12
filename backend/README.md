@@ -1,8 +1,8 @@
 # SeisChat backend
 
-The backend is a FastAPI modular monolith. It is the HTTP entry point for
-future authentication, messaging, and WebSocket features, and uses SQLAlchemy
-and Alembic to work with PostgreSQL.
+The backend is a FastAPI modular monolith. This phase adds the SQLAlchemy
+database foundation for users and authentication sessions, with Alembic
+migrations for PostgreSQL. Authentication routes and messaging are later phases.
 
 ## Folder structure
 
@@ -10,14 +10,16 @@ and Alembic to work with PostgreSQL.
 - `app/core/config.py` loads environment-backed settings.
 - `app/database/connection.py` creates the SQLAlchemy engine and request
   session dependency.
-- `app/database/base.py` holds the declarative base for future models.
-- `app/api/routes/` contains thin HTTP route modules. Phase 1 includes only
-  `GET /health`.
-- `migrations/` contains Alembic configuration and future migration revisions.
+- `app/database/base.py` holds the declarative base.
+- `app/models/` contains the user and authentication-session models. They are
+  imported by `migrations/env.py` so Alembic can discover their tables.
+- `app/api/routes/` contains the health route. Authentication and chat routes
+  are not part of this database-model phase.
+- `migrations/` contains Alembic configuration and versioned schema revisions.
 - `tests/` contains tests that can run without a live PostgreSQL server.
 
-Authentication, user/message models, migrations, REST resources, and
-WebSocket chat are intentionally deferred to later phases.
+The `User` and `Session` models describe database records only. They do not
+implement password hashing or registration, login, and logout workflows.
 
 ## Local setup
 
@@ -50,34 +52,31 @@ Open `http://127.0.0.1:8000/health`. A successful response is:
 The health endpoint reports only application availability; it does not expose
 database credentials or infrastructure details.
 
+## Database migrations
+
+Set `DATABASE_URL` in the local `.env` file to a PostgreSQL database you own.
+From `backend/`, apply the checked-in schema with:
+
+```powershell
+alembic upgrade head
+```
+
+The initial migration creates `users` and `sessions`. It does not create the
+later-phase `messages` table. To create a future migration, run
+`alembic revision --autogenerate -m "Describe the schema change"` and review
+the generated revision before applying it. Use a separate test database for
+migration experiments; do not downgrade a shared or production database.
+
 ## Run tests
 
 ```powershell
 pytest
 ```
 
-The Phase 1 tests cover application import, the health response, and settings
-loaded from environment variables. They do not require PostgreSQL because no
-database query is made by the health route.
-
-## Alembic migrations
-
-Alembic is configured now so future SQLAlchemy models can be migrated. There
-are no Phase 1 models or migration revisions, so do not run or claim a schema
-migration yet.
-
-After a later phase adds models, create and review a revision from `backend`:
-
-```powershell
-alembic revision --autogenerate -m "Describe the schema change"
-alembic upgrade head
-```
-
-To undo the latest applied revision:
-
-```powershell
-alembic downgrade -1
-```
+The model tests create a new in-memory SQLite database for each test and do
+not use production data. PostgreSQL migration testing must use a separate
+isolated PostgreSQL database.
 
 `migrations/env.py` loads the same `DATABASE_URL` setting as the application
-and imports `Base.metadata`, which is how Alembic discovers model tables.
+and imports the models into `Base.metadata`, which is how Alembic discovers
+their tables.
